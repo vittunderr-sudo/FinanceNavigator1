@@ -1,0 +1,67 @@
+name: Build FinanceNavigator APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Unpack FinanceNavigator
+        run: |
+          mkdir project
+          unzip -o "FinanceNavigator_LocalAI_Test_GitHubActions (1).zip" -d project
+
+          echo "Contents:"
+          find project -maxdepth 3 -type f | sort
+
+      - name: Find Android project
+        run: |
+          BUILD_FILE=$(find project -name "build.gradle" -type f | head -n 1)
+
+          if [ -z "$BUILD_FILE" ]; then
+            echo "ERROR: build.gradle not found"
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$BUILD_FILE")
+
+          while [ "$PROJECT_DIR" != "." ] && [ "$PROJECT_DIR" != "/" ]; do
+            if [ -f "$PROJECT_DIR/settings.gradle" ] || [ -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+              break
+            fi
+            PROJECT_DIR=$(dirname "$PROJECT_DIR")
+          done
+
+          echo "Android project found in: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Create Gradle wrapper
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Build APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FinanceNavigator-debug
+          path: |
+            **/build/outputs/apk/debug/*.apk
