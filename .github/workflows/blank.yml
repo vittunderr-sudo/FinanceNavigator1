@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir project
           unzip -o "FinanceNavigator_LocalAI_Test_GitHubActions (1).zip" -d project
-
+          unzip -o appv2.zip -d project
           echo "Contents:"
           find project -maxdepth 3 -type f | sort
 
