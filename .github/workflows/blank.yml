@@ -16,16 +16,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Unpack FinanceNavigator
+          
+          - name: Unpack FinanceNavigator
         run: |
           mkdir project
           unzip -o "FinanceNavigator_LocalAI_Test_GitHubActions (1).zip" -d project
-                - name: Unpack updated app
+
+      - name: Unpack updated app
         run: |
           sudo apt-get update
           sudo apt-get install -y p7zip-full
           7z x appv2.rar -oproject
+
+          echo "Contents:"
+          find project -maxdepth 3 -type f | sort
       - name: Find Android project
         run: |
           BUILD_FILE=$(find project -name "build.gradle" -type f | head -n 1)
