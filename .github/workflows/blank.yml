@@ -53,7 +53,7 @@ jobs:
 
       - name: Create Gradle wrapper
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle wrapper --gradle-version 8.7
+        run: gradle wrapper --gradle-version 8.9
 
       - name: Build APK
         working-directory: ${{ env.PROJECT_DIR }}
