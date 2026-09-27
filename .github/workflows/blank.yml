@@ -1,3 +1,4 @@
+```yaml
 name: Build FinanceNavigator APK
 
 on:
@@ -16,20 +17,25 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          
-          - name: Unpack FinanceNavigator
+
+      - name: Unpack FinanceNavigator
         run: |
           mkdir project
           unzip -o "FinanceNavigator_LocalAI_Test_GitHubActions (1).zip" -d project
+
+          echo "Original project contents:"
+          find project -maxdepth 3 -type f | sort
 
       - name: Unpack updated app
         run: |
           sudo apt-get update
           sudo apt-get install -y p7zip-full
+
           7z x appv2.rar -oproject
 
-          echo "Contents:"
-          find project -maxdepth 3 -type f | sort
+          echo "Updated project contents:"
+          find project -maxdepth 5 -type f | sort
+
       - name: Find Android project
         run: |
           BUILD_FILE=$(find project -name "build.gradle" -type f | head -n 1)
@@ -45,6 +51,7 @@ jobs:
             if [ -f "$PROJECT_DIR/settings.gradle" ] || [ -f "$PROJECT_DIR/settings.gradle.kts" ]; then
               break
             fi
+
             PROJECT_DIR=$(dirname "$PROJECT_DIR")
           done
 
@@ -58,11 +65,13 @@ jobs:
 
       - name: Create Gradle wrapper
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle wrapper --gradle-version 8.9
+        run: |
+          gradle wrapper --gradle-version 8.9
 
       - name: Build APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -70,3 +79,4 @@ jobs:
           name: FinanceNavigator-debug
           path: |
             **/build/outputs/apk/debug/*.apk
+```
