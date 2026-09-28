@@ -81,4 +81,3 @@ jobs:
           name: FinanceNavigator-debug
           path: |
             **/build/outputs/apk/debug/*.apk
-```
