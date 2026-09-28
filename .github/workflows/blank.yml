@@ -33,7 +33,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y p7zip-full
 
-          7z x appv2.rar -oproject
+          7z x -y appv2.rar -oproject
 
           echo "Updated project contents:"
           find project -maxdepth 5 -type f | sort
