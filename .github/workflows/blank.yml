@@ -20,13 +20,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK, NDK and CMake
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.0.12077973" \
+            "cmake;3.22.1"
+
       - name: Unpack FinanceNavigator
         run: |
-          mkdir project
+          mkdir -p project
+
           unzip -o "FinanceNavigator_LocalAI_Test_GitHubActions (1).zip" -d project
 
           echo "Original project contents:"
-          find project -maxdepth 3 -type f | sort
+          find project -maxdepth 4 -type f | sort
 
       - name: Unpack updated app
         run: |
@@ -36,7 +50,46 @@ jobs:
           7z x -y appv2.rar -oproject
 
           echo "Updated project contents:"
-          find project -maxdepth 5 -type f | sort
+          find project -maxdepth 6 -type f | sort
+
+      - name: Fix app build.gradle
+        run: |
+          cat > project/app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.example.financenavigator'
+              compileSdk 35
+
+              ndkVersion "27.0.12077973"
+
+              defaultConfig {
+                  applicationId 'com.example.financenavigator'
+                  minSdk 26
+                  targetSdk 35
+                  versionCode 2
+                  versionName '1.1.0'
+              }
+
+              externalNativeBuild {
+                  cmake {
+                      path file('src/main/cpp/CMakeLists.txt')
+                  }
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.core:core:1.15.0'
+              implementation 'androidx.activity:activity:1.10.1'
+              implementation 'androidx.appcompat:appcompat:1.7.0'
+              implementation 'com.google.mlkit:text-recognition:16.0.1'
+          }
+          EOF
+
+          echo "Fixed app/build.gradle:"
+          cat project/app/build.gradle
 
       - name: Find Android project
         run: |
@@ -56,6 +109,11 @@ jobs:
 
             PROJECT_DIR=$(dirname "$PROJECT_DIR")
           done
+
+          if [ ! -f "$PROJECT_DIR/settings.gradle" ] && [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+            echo "ERROR: settings.gradle not found"
+            exit 1
+          fi
 
           echo "Android project found in: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
